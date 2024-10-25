@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>롤 랜덤팀 생성기</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background-color: #f5f5f5; }
+    .container { width: 80%; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    h1 { color: #333; }
+    .team-container { margin-top: 20px; }
+    .line { font-weight: bold; color: #0059b3; }
+    .champion-name { color: #333; font-size: 1.2em; }
+    button { margin: 15px; padding: 12px 24px; font-size: 16px; background-color: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>롤 랜덤팀 생성기</h1>
+  <div id="team1" class="team-container">
+    <h2>팀 1</h2>
+    <div>탑: <span id="team1-top" class="champion-name">-</span></div>
+    <div>정글: <span id="team1-jungle" class="champion-name">-</span></div>
+    <div>미드: <span id="team1-mid" class="champion-name">-</span></div>
+    <div>원딜: <span id="team1-adc" class="champion-name">-</span></div>
+    <div>서포터: <span id="team1-support" class="champion-name">-</span></div>
+  </div>
+
+  <div id="team2" class="team-container">
+    <h2>팀 2</h2>
+    <div>탑: <span id="team2-top" class="champion-name">-</span></div>
+    <div>정글: <span id="team2-jungle" class="champion-name">-</span></div>
+    <div>미드: <span id="team2-mid" class="champion-name">-</span></div>
+    <div>원딜: <span id="team2-adc" class="champion-name">-</span></div>
+    <div>서포터: <span id="team2-support" class="champion-name">-</span></div>
+  </div>
+
+  <button onclick="generateTeams()">랜덤 팀 생성</button>
+  <button onclick="resetTeams()">초기화</button>
+</div>
+
+<script>
+// 라인별 챔피언 리스트 예시
+const champions = {
+  top: ["가렌", "갱플랭크", "그라가스", "그웬", "나르", "나서스", "다리우스", "럼블", "레넥톤", "리븐", "말파이트", "모데카이저", "문도박사", "볼리베어", "블라디미르", "사이온", "세트", "쉔", "스몰더", "신지드", "아트록스", "야스오", "오로라", "오른", "올라프", "요네", "요릭", "우르곳", "이렐리아", "일리오이", "잭스", "제이스", "초가스", "카밀", "케넨", "케일", "퀸", "크샨테", "클레드", "탐켄치", "트런들", "트린다미어", "티모", "판테온", "피오라", "하이머딩거"],
+  jungle: ["그라가스", "그레이브즈", "녹턴", "누누와 윌럼프", "니달리", "다이애나", "람머스", "렉사이", "렝가", "리신", "릴리아", "마스터이", "바이", "벨베스", "볼리베어", "브라이어", "비에고", "샤코", "세주아니", "쉬바나", "스카너", "신 짜오", "아무무", "아이번", "에코", "엘리스", "오공", "우디르", "워웍", "이블린", "자르반 4세", "자크", "카서스", "카직스", "케인", "킨드레드", "탈리야", "피들스틱", "헤카림"],
+  mid: ["갈리오", "나피리", "다이애나", "라이즈", "럭스", "르블랑", "리산드라", "말자하", "베이가", "벡스", "블라디미르", "빅토르", "사일러스", "스몰더", "신드라", "아리", "아우렐리온 솔", "아지르", "아칼리", "아크샨", "애니", "애니바아", "야스오", "오로라", "오리아나", "요네", "이렐리아", "제드", "제라스", "조이", "카사딘", "카시오페아", "카타리나", "코르키", "키아나", "탈론", "탈리야", "트위스티드 페이트", "피즈", "흐웨이"],
+  adc: ["닐라", "드레이븐", "루시안", "미스 포츈", "바루스", "베인", "사미라", "스몰더", "시비르", "아펠리오스", "애쉬", "이즈리얼", "자야", "제리", "직스", "진", "징크스", "카이사", "칼리스타", "케이틀린", "코그모", "트리스타나", "트위치"],
+  support: ["나미", "노틸러스", "니코", "라칸", "럭스", "레나타 글라스크", "레오나", "렐", "룰루", "마오카이", "모르가나", "밀리오", "바드", "벨코즈", "브라움", "브랜드", "블리츠크랭크", "뽀삐", "세나", "세라핀", "소나", "소라카", "스웨인", "쓰레쉬", "알리스타", "유미", "자이라", "잔나", "제라스", "질리언", "카르마", "타릭", "파이크", "판테온"],
+};
+
+// 선택된 챔피언을 저장할 집합
+let chosenChampions = new Set();
+
+// Fisher-Yates Shuffle을 이용해 배열 섞기
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function getRandomChampion(line) {
+  // 중복되지 않게 라인별 챔피언 리스트를 섞고 선택
+  const availableChamps = shuffle([...champions[line].filter(champ => !chosenChampions.has(champ))]);
+  if (availableChamps.length === 0) return "-";
+  const randomChamp = availableChamps[0]; // 섞인 리스트의 첫 번째 챔피언 선택
+  chosenChampions.add(randomChamp);
+  return randomChamp;
+}
+
+function generateTeams() {
+  // 각 팀에 배정할 챔피언 초기화 및 중복되지 않는 챔피언 배정
+  document.getElementById("team1-top").innerText = getRandomChampion("top");
+  document.getElementById("team1-jungle").innerText = getRandomChampion("jungle");
+  document.getElementById("team1-mid").innerText = getRandomChampion("mid");
+  document.getElementById("team1-adc").innerText = getRandomChampion("adc");
+  document.getElementById("team1-support").innerText = getRandomChampion("support");
+
+  document.getElementById("team2-top").innerText = getRandomChampion("top");
+  document.getElementById("team2-jungle").innerText = getRandomChampion("jungle");
+  document.getElementById("team2-mid").innerText = getRandomChampion("mid");
+  document.getElementById("team2-adc").innerText = getRandomChampion("adc");
+  document.getElementById("team2-support").innerText = getRandomChampion("support");
+}
+
+function resetTeams() {
+  // 선택된 챔피언 목록을 초기화하고 화면에 "-" 표시
+  chosenChampions.clear();
+  const positions = ["top", "jungle", "mid", "adc", "support"];
+  positions.forEach(pos => {
+    document.getElementById(`team1-${pos}`).innerText = "-";
+    document.getElementById(`team2-${pos}`).innerText = "-";
+  });
+}
+</script>
+
+</body>
+</html>
